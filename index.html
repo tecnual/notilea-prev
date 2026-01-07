@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notilea — Nueva Forma de Ver Noticias</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+    body { background: #000; color: #fff; overflow-x: hidden; min-height: 200vh; position: relative; }
+
+    /* ===== PARALLAX LAYERS ===== */
+    .parallax-layer {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+    }
+
+    .layer-back {
+      background: radial-gradient(circle at center, rgba(0,255,255,0.15), transparent 70%);
+      z-index: -5;
+      transform: translateZ(-2px) scale(3);
+    }
+
+    .layer-mid {
+      z-index: -4;
+      opacity: 0.4;
+    }
+
+    .layer-front {
+      z-index: -3;
+      opacity: 0.7;
+    }
+
+    /* ===== Niebla volumétrica ===== */
+    .fog {
+      position: fixed;
+      top: 0; left: 0;
+      width: 200%; height: 200%;
+      background: url('https://i.imgur.com/8IuucQZ.png');
+      background-size: cover;
+      animation: fogMove 60s linear infinite;
+      mix-blend-mode: screen;
+      opacity: 0.15;
+      z-index: -2;
+    }
+    @keyframes fogMove {
+      0% { transform: translateX(0) translateY(0); }
+      50% { transform: translateX(-10%) translateY(5%); }
+      100% { transform: translateX(0) translateY(0); }
+    }
+
+    /* ===== Partículas ===== */
+    #particles {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* ===== Hologrid ===== */
+    .grid {
+      position: fixed;
+      top: 0; left: 0;
+      width: 200%; height: 200%;
+      background-image: linear-gradient(rgba(0,255,255,0.05) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(0,255,255,0.05) 1px, transparent 1px);
+      background-size: 40px 40px;
+      transform: translate(-25%, -25%) rotateX(65deg);
+      animation: hologrid 18s linear infinite;
+      z-index: -6;
+    }
+    @keyframes hologrid {
+      from { transform: translate(-25%, -25%) rotateX(65deg) rotate(0deg); }
+      to   { transform: translate(-25%, -25%) rotateX(65deg) rotate(360deg); }
+    }
+
+    /* ===== LOGO ANIMADO ===== */
+    .logo {
+      width: 120px; height: 120px;
+      border-radius: 50%;
+      border: 2px solid rgba(0,255,255,0.6);
+      display: flex; justify-content: center; align-items: center;
+      font-size: 2.2rem; letter-spacing: 2px;
+      backdrop-filter: blur(6px);
+      background: rgba(0,255,255,0.05);
+      animation: logoFloat 4s ease-in-out infinite, logoPulse 4s ease-in-out infinite alternate;
+      margin-bottom: 30px;
+    }
+    @keyframes logoFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
+    @keyframes logoPulse { 0% { box-shadow: 0 0 15px rgba(0,255,255,0.4);} 100% { box-shadow: 0 0 30px rgba(0,255,255,0.9);} }
+
+    /* ===== CONTENIDO ===== */
+    .content {
+      width: 100%; height: 100vh;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      padding: 20px; text-align: center;
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 5vw, 4rem);
+      text-transform: uppercase;
+      letter-spacing: 6px;
+      margin-bottom: 20px;
+      background: linear-gradient(to right, #0ff, #fff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: glow 3s infinite ease-in-out;
+      opacity: 0; transform: translateY(20px);
+      transition: 1s ease;
+    }
+    @keyframes glow {
+      0%,100% { filter: drop-shadow(0 0 8px #0ff); }
+      50%     { filter: drop-shadow(0 0 18px #0ff); }
+    }
+
+    p, form, .hint { opacity: 0; transform: translateY(20px); transition: 1s ease; }
+
+    /* ===== AUTOTYPING ===== */
+    #autoText { min-height: 60px; font-size: 1.1rem; opacity: 0.85; }
+
+    /* ===== SCROLL REVEAL ===== */
+    .reveal { opacity: 1 !important; transform: translateY(0px) !important; }
+
+    /* ===== FORM ===== */
+    form { display: flex; flex-direction: column; width: 100%; max-width: 400px; gap: 15px; }
+    input[type=email] {
+      padding: 14px 18px; font-size: 1rem; border-radius: 8px;
+      border: none; background: rgba(255,255,255,0.15);
+      color: #fff; backdrop-filter: blur(6px);
+    }
+    button {
+      padding: 14px 18px; font-size: 1rem; border-radius: 8px;
+      background: #0ff; color: #000; font-weight: bold;
+      border: none; cursor: pointer; transition: 0.3s;
+    }
+    button:hover { background: #fff; }
+    /* --- Cinematic Intro --- */
+  .intro-screen {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at center, #000 0%, #030014 80%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: introFadeOut 3s ease forwards;
+  }
+
+  .intro-logo {
+    font-size: 4rem;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    color: #6F00FF;
+    opacity: 0;
+    animation: introLogo 2.2s ease forwards;
+  }
+
+  @keyframes introLogo {
+    0% { transform: scale(0.8); opacity: 0; filter: blur(8px); }
+    40% { opacity: 1; filter: blur(0); }
+    100% { transform: scale(1); opacity: 0; filter: blur(12px); }
+  }
+
+  @keyframes introFadeOut {
+    0% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { opacity: 0; visibility: hidden; }
+  }
+
+  /* --- Dark Mode Absolute + Neon --- */
+  body {
+    background: #000;
+    color: #d8d8ff;
+  }
+
+  h1, h2, .logo span {
+    text-shadow: 0 0 12px rgba(140, 0, 255, 0.8);
+  }
+
+  /* --- Glitch Effect on Scroll Reveal --- */
+  .reveal {
+    position: relative;
+  }
+
+  .reveal.glitch-active::after {
+    content: attr(data-text);
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: #6F00FF;
+    text-shadow: -2px 0 magenta;
+    animation: glitch 0.25s steps(2, end);
+  }
+
+  @keyframes glitch {
+    0% { transform: translate(0); }
+    20% { transform: translate(-3px, 2px); }
+    40% { transform: translate(3px, -2px); }
+    60% { transform: translate(-2px, 1px); }
+    80% { transform: translate(2px, -1px); }
+    100% { transform: translate(0); }
+  }
+
+</style>
+</head>
+<body>
+
+  <!-- PARALLAX LAYERS -->
+  <div class="parallax-layer layer-back"></div>
+  <div class="parallax-layer layer-mid">
+    <div class="fog"></div>
+  </div>
+  <canvas id="particles"></canvas>
+  <div class="grid"></div>
+
+  <div class="content">
+    <div class="logo">
+      <img src="notilea_logo512x512.png" alt="Notilea" style="width: 80%; height: 80%; object-fit: contain; filter: drop-shadow(0 0 5px rgba(0,255,255,0.7));">
+    </div>
+    <h1 class="scroll-reveal">Notilea</h1>
+
+    <p id="autoText" class="scroll-reveal"></p>
+
+    <form id="subscribeForm" action="https://formsubmit.co/formsubmit@notilea.com" method="POST" class="scroll-reveal">
+      <input type="hidden" name="_captcha" value="false">
+      <input type="hidden" name="_template" value="box">
+      <input type="email" name="email" placeholder="Déjame tu correo para enterarte primero" required>
+      <button type="submit">Avisadme</button>
+    </form>
+
+    <div class="hint scroll-reveal">Pronto sabrás por qué las noticias nunca volverán a ser igual.</div>
+  </div>
+
+  <script>
+    /* ===== Parallax avanzado ===== */
+    const layers = document.querySelectorAll('.parallax-layer');
+    document.addEventListener('mousemove', e => {
+      const x = (e.clientX / window.innerWidth - 0.5) * 2;
+      const y = (e.clientY / window.innerHeight - 0.5) * 2;
+      layers.forEach((layer, i) => {
+        const intensity = (i + 1) * 10;
+        layer.style.transform = `translate(${x * intensity}px, ${y * intensity}px)`;
+      });
+    });
+
+    /* ===== Partículas ===== */
+    const canvas = document.getElementById('particles');
+    const ctx = canvas.getContext('2d');
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
+    const particles = Array.from({ length: 80 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      s: Math.random() * 2 + 1,
+      vx: (Math.random() - 0.5) * 0.6,
+      vy: (Math.random() - 0.5) * 0.6,
+    }));
+
+    function renderParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+        ctx.fillStyle = 'rgba(0,255,255,0.8)';
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2); ctx.fill();
+      });
+      requestAnimationFrame(renderParticles);
+    }
+    renderParticles();
+
+    /* ===== Scroll reveal & Glitch ===== */
+    const revealElements = document.querySelectorAll('.scroll-reveal');
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => { 
+        if (entry.isIntersecting) {
+            const el = entry.target;
+            el.classList.add('reveal');
+            
+            // Glitch effect on reveal
+            setTimeout(() => {
+                el.setAttribute('data-text', el.innerText);
+                el.classList.add('glitch-active');
+                setTimeout(() => el.classList.remove('glitch-active'), 400);
+            }, 150);
+        }
+      });
+    }, { threshold: 0.3 });
+    revealElements.forEach(el => observer.observe(el));
+
+    /* ===== AUTO-TYPING (IA simulada) ===== */
+    const autoText = document.getElementById('autoText');
+    const msg = "Información clara en un mundo complejo.";
+    let idx = 0;
+    function type() {
+      if (idx < msg.length) {
+        autoText.textContent += msg[idx];
+        idx++;
+        setTimeout(type, 45);
+      }
+    }
+    setTimeout(type, 800);
+
+    /* ===== FORM HANDLING (Fetch) ===== */
+    const form = document.getElementById('subscribeForm');
+    const btn = form.querySelector('button');
+    
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const originalText = btn.textContent;
+      btn.textContent = 'Enviando...';
+      btn.disabled = true;
+      btn.style.opacity = '0.7';
+
+      fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: {
+            'Accept': 'application/json'
+        }
+      })
+      .then(response => {
+          if (response.ok) {
+              btn.textContent = '¡Hecho! Estás dentro.';
+              btn.style.background = '#0f0'; // Green for success
+              btn.style.color = '#000';
+              btn.style.boxShadow = '0 0 15px #0f0';
+              form.reset();
+          } else {
+              throw new Error('Form submission failed');
+          }
+      })
+      .catch(error => {
+          console.error(error);
+          btn.textContent = 'Error. Inténtalo de nuevo.';
+          btn.style.background = '#f00';
+          btn.disabled = false;
+          setTimeout(() => {
+              btn.textContent = originalText;
+              btn.style.background = '#0ff';
+              btn.style.color = '#000';
+              btn.style.boxShadow = 'none';
+          }, 3000);
+      });
+    });
+
+  // Cinematic Intro Auto-remove
+  window.addEventListener("load", () => {
+    setTimeout(() => {
+      document.querySelector('.intro-screen')?.remove();
+    }, 3200);
+  });
+
+  </script>
+  <!-- Cinematic Intro -->
+  <div class="intro-screen">
+    <div class="intro-logo">NOTILEA</div>
+  </div>
+
+  </body>
+</html>
